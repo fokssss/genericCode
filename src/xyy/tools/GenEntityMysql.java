@@ -22,17 +22,11 @@ public class GenEntityMysql {
     //输出文件的路径
     private String mOutPath = "";
 
-    //数据库连接
-    private String jdbcUrl = "jdbc:mysql://localhost:3306/test";
-    private static final String NAME = "root";
-    private static final String PASS = "root";
-    private static final String DRIVER = "com.mysql.jdbc.Driver";
 
     /*
      * 构造函数
      */
-    public GenEntityMysql(String url, String outpath) {
-        jdbcUrl = url;
+    public GenEntityMysql(String outpath) {
         mOutPath = outpath;
     }
 
@@ -89,7 +83,7 @@ public class GenEntityMysql {
                 colSizes[i] = rsmd.getColumnDisplaySize(i + 1);
             }
 
-            String content = parse(entityName, colnames, colTypes, colSizes);
+            String content = buildJavaCode(entityName, colnames, colTypes, colSizes);
             buildJavaObjectFile(entityName, content);
 
             buildBatisMappingFile(entityName, colnames, colTypes, colSizes);
@@ -229,8 +223,8 @@ public class GenEntityMysql {
 
     private Connection getConnection() throws SQLException, ClassNotFoundException {
         if (_conn == null) {
-            Class.forName(DRIVER);
-            _conn = DriverManager.getConnection(jdbcUrl, NAME, PASS);
+            Class.forName(Main.DRIVER);
+            _conn = DriverManager.getConnection(Main.JDBC_URL, Main.NAME, Main.PASS);
         }
         return _conn;
     }
@@ -252,7 +246,7 @@ public class GenEntityMysql {
      * @param colSizes
      * @return
      */
-    private String parse(String tablename, String[] colnames, String[] colTypes, int[] colSizes) {
+    private String buildJavaCode(String tablename, String[] colnames, String[] colTypes, int[] colSizes) {
         StringBuffer s = new StringBuffer();
 
         s.append("package " + this.enitityPackageName + ".model;\r\n");
@@ -266,6 +260,8 @@ public class GenEntityMysql {
         }
         s.append("import xyy.base.TextUtils;\r\n");
         s.append("import java.util.HashMap;\r\n");
+        s.append("import xyy.entity.*;\r\n");
+
 
         s.append("\r\n");
         //注释部分
@@ -275,7 +271,31 @@ public class GenEntityMysql {
         s.append("    */ \r\n");
         //实体部分
         String clsName = initcap(tablename);
-        s.append("\r\n\r\npublic class " + clsName + "{\r\n");
+        s.append("\r\n\r\npublic class " + clsName + " extends EntityBase{\r\n");
+        s.append("\r\n");
+
+
+        ///构造方法
+//        public CSUser() {
+//        super.setEntityName("CSUser");
+//        super.setPackageName("xyy.chnbs.biz.model");
+//        super.setMappingName("xyy.chnbs.biz.mapping.CSUser_MAPPING");
+//        super.addField("pkid", new FieldInfo("pkid", "INT", "int"));
+//
+//        }
+        s.append("public " + clsName + "() {\r\n");
+        s.append("\tsuper.setEntityName(\"" + tablename + "\");\r\n");
+        s.append("\tsuper.setPackageName(\"" + this.enitityPackageName + ".model\");\r\n");
+        s.append("\tsuper.setMappingName(\"" + this.enitityPackageName + ".mapping." + clsName + "_MAPPING\");\r\n");
+
+        for (int i = 0; i < colnames.length; i++) {
+            s.append("\tsuper.addField(\"" + colnames[i] + "\",new FieldInfo(\"" + colnames[i] + "\",\"" + colTypes[i] + "\",\"" + sqlType2JavaType(colTypes[i]) + "\"));\r\n");
+        }
+        s.append("}\r\n");
+        s.append("\r\n");
+        s.append("\r\n");
+
+
         processAllAttrs(s, colnames, colTypes);//属性
         processAllMethod(s, colnames, colTypes);//get set方法
 
