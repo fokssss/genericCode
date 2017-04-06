@@ -11,8 +11,8 @@ public class Main {
 
     public static void main(String[] args) {
 //        String dbUrl = "jdbc:mysql://localhost:3306/chnbs";
-//        String outPath = "/Users/xyy/workspace/chnsball/src/";
-        String outPath = "D:\\workspace\\chnsb\\src\\";
+        String outPath = "/Users/xyy/githubs/chnsbwin/src/";
+//        String outPath = "D:\\workspace\\chnsb\\src\\";
 
         GenEntityMysql generic = new GenEntityMysql(outPath);
 
