@@ -12,7 +12,7 @@ import java.util.List;
 
 public class GenEntityMysql {
 
-    private String enitityPackageName = "xyy.chnbs.biz";//指定实体生成所在包的路径
+    private String entityPackageName = "xyy.chnbs.biz";//指定实体生成所在包的路径
     private String authorName = "xiongyy";//作者名字
 
     private boolean f_util = true; // 是否需要导入包java.util.*
@@ -37,9 +37,39 @@ public class GenEntityMysql {
         //查要生成实体类的表
         PreparedStatement pStemt = con.prepareStatement(sql);
         ResultSet rs = pStemt.executeQuery();
-        while (rs.next()) {
-            build(rs.getString(1));
+
+        String path = mOutPath + "batisConfigure.xml";
+        FileWriter fw = null;
+        StringBuffer mapper = new StringBuffer();
+        try {
+            fw = new FileWriter(path);
+            PrintWriter pw = new PrintWriter(fw);
+            pw.println("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>");
+            pw.println("<!DOCTYPE configuration PUBLIC \"-//mybatis.org//DTD Config 3.0//EN\"");
+            pw.println("\"http://mybatis.org/dtd/mybatis-3-config.dtd\">");
+            pw.println("");
+            pw.println("");
+            pw.println("<configuration>");
+            pw.println("<typeAliases>");
+            while (rs.next()) {
+                String entityName = rs.getString(1);
+                String clsName = initcap(entityName);
+                pw.println("\t<typeAlias alias=\"" + clsName + "\" type=\"" + entityPackageName + ".model." + clsName + "\"/>");
+                mapper.append("\t<mapper resource=\"" + entityPackageName.replace(".", "/") + "/mapping/" + clsName + ".xml\"/>\r\n");
+                build(entityName);
+            }
+            pw.println("</typeAliases>");
+            pw.println("<mappers>");
+            pw.println(mapper.toString());
+            pw.println("</mappers>");
+            pw.println("</configuration>");
+            pw.flush();
+            pw.close();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
+
+
         rs.close();
         pStemt.close();
         closeConnection();
@@ -102,7 +132,7 @@ public class GenEntityMysql {
 //    select * from `CS_USER` where pkid = #{id}
 //    </select>
     private void buildBatisMappingFile(String entityName, String[] colnames, String[] colTypes, int[] colSizes) {
-        String path = mOutPath + enitityPackageName.replace(".", "/") + "/mapping";
+        String path = mOutPath + entityPackageName.replace(".", "/") + "/mapping";
         new File(path).mkdirs();
         String clsName = initcap(entityName);
         String mappingFileName = path + "/" + clsName + ".xml";
@@ -115,7 +145,7 @@ public class GenEntityMysql {
             pw.println("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>");
             pw.println("<!DOCTYPE mapper PUBLIC \"-//mybatis.org//DTD Mapper 3.0//EN\" \"http://mybatis.org/dtd/mybatis-3-mapper.dtd\">");
             pw.println("");
-            pw.println("<mapper namespace=\"" + enitityPackageName + ".mapping." + clsName + "_MAPPING\">");
+            pw.println("<mapper namespace=\"" + entityPackageName + ".mapping." + clsName + "_MAPPING\">");
             pw.println("\t<select id=\"selectByID\" parameterType=\"int\" resultType=\"" + clsName + "\">");
             pw.println("\t\tselect * from `" + entityName + "` where pkid = #{id}");
             pw.println("\t</select>");
@@ -205,7 +235,7 @@ public class GenEntityMysql {
 
     private void buildJavaObjectFile(String entityName, String content) {
         try {
-            String path = mOutPath + enitityPackageName.replace(".", "/") + "/model";
+            String path = mOutPath + entityPackageName.replace(".", "/") + "/model";
             new File(path).mkdirs();
             String javaFileName = path + "/" + initcap(entityName) + ".java";
             System.out.println("create java file - " + javaFileName);
@@ -249,7 +279,7 @@ public class GenEntityMysql {
     private String buildJavaCode(String tablename, String[] colnames, String[] colTypes, int[] colSizes) {
         StringBuffer s = new StringBuffer();
 
-        s.append("package " + this.enitityPackageName + ".model;\r\n");
+        s.append("package " + this.entityPackageName + ".model;\r\n");
         s.append("\r\n");
         //判断是否导入工具包
         if (f_util) {
@@ -285,8 +315,8 @@ public class GenEntityMysql {
 //        }
         s.append("public " + clsName + "() {\r\n");
         s.append("\tsuper.setEntityName(\"" + tablename + "\");\r\n");
-        s.append("\tsuper.setPackageName(\"" + this.enitityPackageName + ".model\");\r\n");
-        s.append("\tsuper.setMappingName(\"" + this.enitityPackageName + ".mapping." + clsName + "_MAPPING\");\r\n");
+        s.append("\tsuper.setPackageName(\"" + this.entityPackageName + ".model\");\r\n");
+        s.append("\tsuper.setMappingName(\"" + this.entityPackageName + ".mapping." + clsName + "_MAPPING\");\r\n");
 
         for (int i = 0; i < colnames.length; i++) {
             s.append("\tsuper.addField(\"" + colnames[i] + "\",new FieldInfo(\"" + colnames[i] + "\",\"" + colTypes[i] + "\",\"" + sqlType2JavaType(colTypes[i]) + "\"));\r\n");
