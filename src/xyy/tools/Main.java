@@ -1,6 +1,7 @@
 package xyy.tools;
 
 import java.sql.SQLException;
+import java.util.HashMap;
 
 public class Main {
     //数据库连接
@@ -9,12 +10,19 @@ public class Main {
     public static final String PASS = "biscuit";
     public static final String DRIVER = "com.mysql.jdbc.Driver";
 
+    public static HashMap<String, EntityInfo> entityInfos = new HashMap<>();
+
+    static {
+        entityInfos.put(
+                "CSUser", new EntityInfo("status", "1"));
+    }
+
     public static void main(String[] args) {
 //        String dbUrl = "jdbc:mysql://localhost:3306/chnbs";
 //        String outPath = "/Users/xyy/githubs/chnsbwin/src/";
         String outPath = "D:\\github\\chnsbwin\\src\\";
 
-        GenEntityMysql generic = new GenEntityMysql(outPath);
+        GenericObject generic = new GenericObject(outPath);
 
         try {
             generic.build();
@@ -26,5 +34,14 @@ public class Main {
 
         System.out.println("done.");
 
+    }
+
+    public static String getDefaultValue(String entityName, String colname) {
+        EntityInfo info = entityInfos.get(entityName);
+        if (info == null) {
+            return null;
+        }
+        String value = info.getDefultValue(colname);
+        return value;
     }
 }

@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-public class GenEntityMysql {
+public class GenericObject {
 
     private String entityPackageName = "xyy.chnbs.biz";//指定实体生成所在包的路径
     private String authorName = "xiongyy";//作者名字
@@ -26,7 +26,7 @@ public class GenEntityMysql {
     /*
      * 构造函数
      */
-    public GenEntityMysql(String outpath) {
+    public GenericObject(String outpath) {
         mOutPath = outpath;
     }
 
@@ -326,7 +326,7 @@ public class GenEntityMysql {
         s.append("\r\n");
 
 
-        processAllAttrs(s, colnames, colTypes);//属性
+        processAllAttrs(s, colnames, colTypes, tablename);//属性
         processAllMethod(s, colnames, colTypes);//get set方法
 
         //创建构造方法
@@ -336,22 +336,47 @@ public class GenEntityMysql {
 //            rs.setStatus(TextUtils.getInt(data, "status", 0));
 //            return rs;
 //        }
+
+        //创建from(<HashMap<String,?> data)方法
         s.append("\r\n");
         s.append("\tpublic static " + clsName + " from(HashMap<String, ?> data) {\r\n");
         s.append("\t\t" + clsName + " rs = new " + clsName + "();\r\n");
         for (int i = 0; i < colnames.length; i++) {
             String javaType = sqlType2JavaType(colTypes[i]);
+            String fieldname = colnames[i];
+            String defaultValue = Main.getDefaultValue(tablename, fieldname);
+
             switch (javaType) {
                 case "int":
-                    s.append("\t\trs.set" + initcap(colnames[i]) + "(TextUtils.getInt(data, \"" + colnames[i] + "\", 0));\r\n");
+                    if (defaultValue == null) {
+                        defaultValue = "0";
+                    }
+                    s.append("\t\trs.set" + initcap(fieldname) + "(TextUtils.getInt(data, \"" + fieldname + "\", " + defaultValue + "));");
                     break;
                 default:
-                    s.append("\t\trs.set" + initcap(colnames[i]) + "(TextUtils.getString(data, \"" + colnames[i] + "\", \"\"));\r\n");
+                    if (defaultValue == null) {
+                        defaultValue = "\"\"";
+                    }
+                    s.append("\t\trs.set" + initcap(fieldname) + "(TextUtils.getString(data, \"" + fieldname + "\", " + defaultValue + "));");
             }
             s.append("\r\n");
         }
         s.append("\t\treturn rs;\r\n");
         s.append("\t}\r\n");
+
+
+        //创建<T extends CSUser> T copyTo(T instance)方法
+        s.append("\r\n");
+        s.append("\tpublic <T extends " + clsName + "> T copyTo(T instance) {\r\n");
+        s.append("\t\tif (instance == null) { return instance; }\r\n");
+        for (int i = 0; i < colnames.length; i++) {
+            String fieldname = initcap(colnames[i]);
+            s.append("\t\tinstance.set" + fieldname + "(this.get" + fieldname + "());\r\n");
+        }
+        s.append("\t\treturn instance;\r\n");
+        s.append("\t}\r\n");
+
+
         //类结束
         s.append("}\r\n");
 
@@ -363,11 +388,17 @@ public class GenEntityMysql {
      * 功能：生成所有属性
      *
      * @param sb
+     * @param entityName
      */
-    private void processAllAttrs(StringBuffer sb, String[] colnames, String[] colTypes) {
+    private void processAllAttrs(StringBuffer sb, String[] colnames, String[] colTypes, String entityName) {
 
         for (int i = 0; i < colnames.length; i++) {
-            sb.append("\tprivate " + sqlType2JavaType(colTypes[i]) + " " + colnames[i] + ";\r\n");
+            String defaultValue = Main.getDefaultValue(entityName, colnames[i]);
+            if (defaultValue == null) {
+                sb.append("\tprivate " + sqlType2JavaType(colTypes[i]) + " " + colnames[i] + ";\r\n");
+            } else {
+                sb.append("\tprivate " + sqlType2JavaType(colTypes[i]) + " " + colnames[i] + " = " + defaultValue + ";\r\n");
+            }
         }
 
     }
