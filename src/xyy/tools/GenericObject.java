@@ -10,9 +10,9 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-public class GenEntityMysql {
+public class GenericObject {
 
-    private String enitityPackageName = "xyy.chnbs.biz";//指定实体生成所在包的路径
+    private String entityPackageName = "xyy.chnbs.biz";//指定实体生成所在包的路径
     private String authorName = "xiongyy";//作者名字
 
     private boolean f_util = true; // 是否需要导入包java.util.*
@@ -26,7 +26,7 @@ public class GenEntityMysql {
     /*
      * 构造函数
      */
-    public GenEntityMysql(String outpath) {
+    public GenericObject(String outpath) {
         mOutPath = outpath;
     }
 
@@ -37,9 +37,39 @@ public class GenEntityMysql {
         //查要生成实体类的表
         PreparedStatement pStemt = con.prepareStatement(sql);
         ResultSet rs = pStemt.executeQuery();
-        while (rs.next()) {
-            build(rs.getString(1));
+
+        String path = mOutPath + "batisConfigure.xml";
+        FileWriter fw = null;
+        StringBuffer mapper = new StringBuffer();
+        try {
+            fw = new FileWriter(path);
+            PrintWriter pw = new PrintWriter(fw);
+            pw.println("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>");
+            pw.println("<!DOCTYPE configuration PUBLIC \"-//mybatis.org//DTD Config 3.0//EN\"");
+            pw.println("\"http://mybatis.org/dtd/mybatis-3-config.dtd\">");
+            pw.println("");
+            pw.println("");
+            pw.println("<configuration>");
+            pw.println("<typeAliases>");
+            while (rs.next()) {
+                String entityName = rs.getString(1);
+                String clsName = initcap(entityName);
+                pw.println("\t<typeAlias alias=\"" + clsName + "\" type=\"" + entityPackageName + ".model." + clsName + "\"/>");
+                mapper.append("\t<mapper resource=\"" + entityPackageName.replace(".", "/") + "/mapping/" + clsName + ".xml\"/>\r\n");
+                build(entityName);
+            }
+            pw.println("</typeAliases>");
+            pw.println("<mappers>");
+            pw.println(mapper.toString());
+            pw.println("</mappers>");
+            pw.println("</configuration>");
+            pw.flush();
+            pw.close();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
+
+
         rs.close();
         pStemt.close();
         closeConnection();
@@ -101,7 +131,7 @@ public class GenEntityMysql {
 //    select * from `CS_USER` where pkid = #{id}
 //    </select>
     private void buildBatisMappingFile(String entityName, String[] colnames, String[] colTypes, int[] colSizes) {
-        String path = mOutPath + enitityPackageName.replace(".", "/") + "/mapping";
+        String path = mOutPath + entityPackageName.replace(".", "/") + "/mapping";
         new File(path).mkdirs();
         String clsName = initcap(entityName);
         String mappingFileName = path + "/" + clsName + ".xml";
@@ -114,7 +144,7 @@ public class GenEntityMysql {
             pw.println("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>");
             pw.println("<!DOCTYPE mapper PUBLIC \"-//mybatis.org//DTD Mapper 3.0//EN\" \"http://mybatis.org/dtd/mybatis-3-mapper.dtd\">");
             pw.println("");
-            pw.println("<mapper namespace=\"" + enitityPackageName + ".mapping." + clsName + "_MAPPING\">");
+            pw.println("<mapper namespace=\"" + entityPackageName + ".mapping." + clsName + "_MAPPING\">");
             pw.println("\t<select id=\"selectByID\" parameterType=\"int\" resultType=\"" + clsName + "\">");
             pw.println("\t\tselect * from `" + entityName + "` where pkid = #{id}");
             pw.println("\t</select>");
@@ -204,7 +234,7 @@ public class GenEntityMysql {
 
     private void buildJavaObjectFile(String entityName, String content) {
         try {
-            String path = mOutPath + enitityPackageName.replace(".", "/") + "/model";
+            String path = mOutPath + entityPackageName.replace(".", "/") + "/model";
             new File(path).mkdirs();
             String javaFileName = path + "/" + initcap(entityName) + ".java";
             System.out.println("create java file - " + javaFileName);
@@ -248,7 +278,7 @@ public class GenEntityMysql {
     private String buildJavaCode(String tablename, String[] colnames, String[] colTypes, int[] colSizes) {
         StringBuffer s = new StringBuffer();
 
-        s.append("package " + this.enitityPackageName + ".model;\r\n");
+        s.append("package " + this.entityPackageName + ".model;\r\n");
         s.append("\r\n");
         //判断是否导入工具包
         if (f_util) {
@@ -284,8 +314,8 @@ public class GenEntityMysql {
 //        }
         s.append("public " + clsName + "() {\r\n");
         s.append("\tsuper.setEntityName(\"" + tablename + "\");\r\n");
-        s.append("\tsuper.setPackageName(\"" + this.enitityPackageName + ".model\");\r\n");
-        s.append("\tsuper.setMappingName(\"" + this.enitityPackageName + ".mapping." + clsName + "_MAPPING\");\r\n");
+        s.append("\tsuper.setPackageName(\"" + this.entityPackageName + ".model\");\r\n");
+        s.append("\tsuper.setMappingName(\"" + this.entityPackageName + ".mapping." + clsName + "_MAPPING\");\r\n");
 
         for (int i = 0; i < colnames.length; i++) {
             s.append("\tsuper.addField(\"" + colnames[i] + "\",new FieldInfo(\"" + colnames[i] + "\",\"" + colTypes[i] + "\",\"" + sqlType2JavaType(colTypes[i]) + "\"));\r\n");
@@ -295,7 +325,7 @@ public class GenEntityMysql {
         s.append("\r\n");
 
 
-        processAllAttrs(s, colnames, colTypes);//属性
+        processAllAttrs(s, colnames, colTypes, tablename);//属性
         processAllMethod(s, colnames, colTypes);//get set方法
 
         //创建构造方法
@@ -305,22 +335,47 @@ public class GenEntityMysql {
 //            rs.setStatus(TextUtils.getInt(data, "status", 0));
 //            return rs;
 //        }
+
+        //创建from(<HashMap<String,?> data)方法
         s.append("\r\n");
         s.append("\tpublic static " + clsName + " from(HashMap<String, ?> data) {\r\n");
         s.append("\t\t" + clsName + " rs = new " + clsName + "();\r\n");
         for (int i = 0; i < colnames.length; i++) {
             String javaType = sqlType2JavaType(colTypes[i]);
+            String fieldname = colnames[i];
+            String defaultValue = Main.getDefaultValue(tablename, fieldname);
+
             switch (javaType) {
                 case "int":
-                    s.append("\t\trs.set" + initcap(colnames[i]) + "(TextUtils.getInt(data, \"" + colnames[i] + "\", 0));\r\n");
+                    if (defaultValue == null) {
+                        defaultValue = "0";
+                    }
+                    s.append("\t\trs.set" + initcap(fieldname) + "(TextUtils.getInt(data, \"" + fieldname + "\", " + defaultValue + "));");
                     break;
                 default:
-                    s.append("\t\trs.set" + initcap(colnames[i]) + "(TextUtils.getString(data, \"" + colnames[i] + "\", \"\"));\r\n");
+                    if (defaultValue == null) {
+                        defaultValue = "\"\"";
+                    }
+                    s.append("\t\trs.set" + initcap(fieldname) + "(TextUtils.getString(data, \"" + fieldname + "\", " + defaultValue + "));");
             }
             s.append("\r\n");
         }
         s.append("\t\treturn rs;\r\n");
         s.append("\t}\r\n");
+
+
+        //创建<T extends CSUser> T copyTo(T instance)方法
+        s.append("\r\n");
+        s.append("\tpublic <T extends " + clsName + "> T copyTo(T instance) {\r\n");
+        s.append("\t\tif (instance == null) { return instance; }\r\n");
+        for (int i = 0; i < colnames.length; i++) {
+            String fieldname = initcap(colnames[i]);
+            s.append("\t\tinstance.set" + fieldname + "(this.get" + fieldname + "());\r\n");
+        }
+        s.append("\t\treturn instance;\r\n");
+        s.append("\t}\r\n");
+
+
         //类结束
         s.append("}\r\n");
 
@@ -332,11 +387,17 @@ public class GenEntityMysql {
      * 功能：生成所有属性
      *
      * @param sb
+     * @param entityName
      */
-    private void processAllAttrs(StringBuffer sb, String[] colnames, String[] colTypes) {
+    private void processAllAttrs(StringBuffer sb, String[] colnames, String[] colTypes, String entityName) {
 
         for (int i = 0; i < colnames.length; i++) {
-            sb.append("\tprivate " + sqlType2JavaType(colTypes[i]) + " " + colnames[i] + ";\r\n");
+            String defaultValue = Main.getDefaultValue(entityName, colnames[i]);
+            if (defaultValue == null) {
+                sb.append("\tprivate " + sqlType2JavaType(colTypes[i]) + " " + colnames[i] + ";\r\n");
+            } else {
+                sb.append("\tprivate " + sqlType2JavaType(colTypes[i]) + " " + colnames[i] + " = " + defaultValue + ";\r\n");
+            }
         }
 
     }
