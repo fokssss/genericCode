@@ -13,14 +13,21 @@ public class Main {
     public static HashMap<String, EntityInfo> entityInfos = new HashMap<>();
 
     static {
+        EntityInfo item = new EntityInfo("status", "1");
         entityInfos.put(
-                "CSUser", new EntityInfo("status", "1"));
+                "CSUser", item);
+        item = new EntityInfo("status", "1");
+        entityInfos.put(
+                "CSParty", item);
+        item = new EntityInfo("status", "1");
+        entityInfos.put(
+                "CSUserParty", item);
     }
 
     public static void main(String[] args) {
 //        String dbUrl = "jdbc:mysql://localhost:3306/chnbs";
-//        String outPath = "/Users/xyy/githubs/chnsbwin/src/";
-        String outPath = "D:\\github\\chnsbwin\\src\\";
+        String outPath = "/Users/xyy/githubs/chnsbwin/src/";
+//        String outPath = "D:\\github\\chnsbwin\\src\\";
 
         GenericObject generic = new GenericObject(outPath);
 
