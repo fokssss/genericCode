@@ -73,7 +73,6 @@ public class GenEntityMysql {
             for (int i = 0; i < size; i++) {
                 colnames[i] = rsmd.getColumnName(i + 1);
                 colTypes[i] = rsmd.getColumnTypeName(i + 1);
-
                 if (colTypes[i].equalsIgnoreCase("datetime")) {
                     f_util = true;
                 }
