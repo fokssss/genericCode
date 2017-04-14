@@ -344,7 +344,9 @@ public class GenericObject {
             String javaType = sqlType2JavaType(colTypes[i]);
             String fieldname = colnames[i];
             String defaultValue = Main.getDefaultValue(tablename, fieldname);
-
+            if (fieldname.equalsIgnoreCase("pkid")) {
+                defaultValue = "-1";
+            }
             switch (javaType) {
                 case "int":
                     if (defaultValue == null) {
@@ -393,6 +395,9 @@ public class GenericObject {
 
         for (int i = 0; i < colnames.length; i++) {
             String defaultValue = Main.getDefaultValue(entityName, colnames[i]);
+            if (colnames[i].equalsIgnoreCase("pkid")) {
+                defaultValue = "-1";
+            }
             if (defaultValue == null) {
                 sb.append("\tprivate " + sqlType2JavaType(colTypes[i]) + " " + colnames[i] + ";\r\n");
             } else {
