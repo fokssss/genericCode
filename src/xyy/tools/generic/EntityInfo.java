@@ -1,4 +1,4 @@
-package xyy.tools;
+package xyy.tools.generic;
 
 import java.util.HashMap;
 

@@ -1,5 +1,7 @@
-package xyy.tools;
+package xyy.tools.generic;
 
+
+import xyy.tools.Main;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -75,7 +77,7 @@ public class GenericObject {
         closeConnection();
     }
 
-    private void build(String tablename) throws SQLException, ClassNotFoundException {
+    public void build(String tablename) throws SQLException, ClassNotFoundException {
         //创建连接
         Connection con = getConnection();
 
@@ -354,6 +356,12 @@ public class GenericObject {
                     }
                     s.append("\t\trs.set" + initcap(fieldname) + "(TextUtils.getInt(data, \"" + fieldname + "\", " + defaultValue + "));");
                     break;
+                case "long":
+                    if (defaultValue == null) {
+                        defaultValue = "0";
+                    }
+                    s.append("\t\trs.set" + initcap(fieldname) + "(TextUtils.getLong(data, \"" + fieldname + "\", " + defaultValue + "));");
+                    break;
                 default:
                     if (defaultValue == null) {
                         defaultValue = "\"\"";
@@ -394,14 +402,15 @@ public class GenericObject {
     private void processAllAttrs(StringBuffer sb, String[] colnames, String[] colTypes, String entityName) {
 
         for (int i = 0; i < colnames.length; i++) {
+            String fieldname = colnames[i];
             String defaultValue = Main.getDefaultValue(entityName, colnames[i]);
-            if (colnames[i].equalsIgnoreCase("pkid")) {
+            if (fieldname.equalsIgnoreCase("pkid")) {
                 defaultValue = "-1";
             }
             if (defaultValue == null) {
-                sb.append("\tprivate " + sqlType2JavaType(colTypes[i]) + " " + colnames[i] + ";\r\n");
+                sb.append("\tprivate " + sqlType2JavaType(colTypes[i]) + " " + fieldname + ";\r\n");
             } else {
-                sb.append("\tprivate " + sqlType2JavaType(colTypes[i]) + " " + colnames[i] + " = " + defaultValue + ";\r\n");
+                sb.append("\tprivate " + sqlType2JavaType(colTypes[i]) + " " + fieldname + " = " + defaultValue + ";\r\n");
             }
         }
 

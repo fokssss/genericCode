@@ -1,5 +1,8 @@
 package xyy.tools;
 
+import xyy.tools.generic.EntityInfo;
+import xyy.tools.generic.GenericObject;
+
 import java.sql.SQLException;
 import java.util.HashMap;
 
