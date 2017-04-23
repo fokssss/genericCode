@@ -340,6 +340,19 @@ public class GenericObject {
 
         //创建from(<HashMap<String,?> data)方法
         s.append("\r\n");
+        s.append("\tpublic static " + clsName + " from(" + clsName + " from, HashMap<String, ?> data) {\r\n");
+        s.append("\t\t" + clsName + " rs = new " + clsName + "();\r\n");
+        for (int i = 0; i < colnames.length; i++) {
+            String javaType = sqlType2JavaType(colTypes[i]);
+            String fieldname = colnames[i];
+            String defaultValue = "from.get" + initcap(fieldname) + "()";
+            s.append(getSetFieldString(javaType, fieldname, defaultValue));
+            s.append("\r\n");
+        }
+        s.append("\t\treturn rs;\r\n");
+        s.append("\t}\r\n");
+
+        s.append("\r\n");
         s.append("\tpublic static " + clsName + " from(HashMap<String, ?> data) {\r\n");
         s.append("\t\t" + clsName + " rs = new " + clsName + "();\r\n");
         for (int i = 0; i < colnames.length; i++) {
@@ -349,25 +362,7 @@ public class GenericObject {
             if (fieldname.equalsIgnoreCase("pkid")) {
                 defaultValue = "-1";
             }
-            switch (javaType) {
-                case "int":
-                    if (defaultValue == null) {
-                        defaultValue = "0";
-                    }
-                    s.append("\t\trs.set" + initcap(fieldname) + "(TextUtils.getInt(data, \"" + fieldname + "\", " + defaultValue + "));");
-                    break;
-                case "long":
-                    if (defaultValue == null) {
-                        defaultValue = "0";
-                    }
-                    s.append("\t\trs.set" + initcap(fieldname) + "(TextUtils.getLong(data, \"" + fieldname + "\", " + defaultValue + "));");
-                    break;
-                default:
-                    if (defaultValue == null) {
-                        defaultValue = "\"\"";
-                    }
-                    s.append("\t\trs.set" + initcap(fieldname) + "(TextUtils.getString(data, \"" + fieldname + "\", " + defaultValue + "));");
-            }
+            s.append(getSetFieldString(javaType, fieldname, defaultValue));
             s.append("\r\n");
         }
         s.append("\t\treturn rs;\r\n");
@@ -391,6 +386,30 @@ public class GenericObject {
 
         //System.out.println(stringBuffer.toString());
         return s.toString();
+    }
+
+    private String getSetFieldString(String javaType, String fieldname, String defaultValue) {
+        String rs = "";
+        switch (javaType) {
+            case "int":
+                if (defaultValue == null) {
+                    defaultValue = "0";
+                }
+                rs = "\t\trs.set" + initcap(fieldname) + "(TextUtils.getInt(data, \"" + fieldname + "\", " + defaultValue + "));";
+                break;
+            case "long":
+                if (defaultValue == null) {
+                    defaultValue = "0";
+                }
+                rs = "\t\trs.set" + initcap(fieldname) + "(TextUtils.getLong(data, \"" + fieldname + "\", " + defaultValue + "));";
+                break;
+            default:
+                if (defaultValue == null) {
+                    defaultValue = "\"\"";
+                }
+                rs = "\t\trs.set" + initcap(fieldname) + "(TextUtils.getString(data, \"" + fieldname + "\", " + defaultValue + "));";
+        }
+        return rs;
     }
 
     /**
