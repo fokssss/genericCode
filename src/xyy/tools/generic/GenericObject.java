@@ -153,6 +153,9 @@ public class GenericObject {
             pw.println("\t<select id=\"getAll\" resultType=\"" + clsName + "\">");
             pw.println("\t\tselect * from `" + clsName + "`");
             pw.println("\t</select>");
+            pw.println("\t<select id=\"getTopAll\" resultType=\"" + clsName + "\">");
+            pw.println("\t\tselect * from `" + clsName + "`");
+            pw.println("\t</select>");
 //    <insert id="addItem" parameterType="CS_USER">
 //        <selectKey resultType="java.lang.Short" order="AFTER" keyProperty="pkid">
 //                    SELECT LAST_INSERT_ID() AS pkid
@@ -165,7 +168,7 @@ public class GenericObject {
 //        )
 //    </insert>
             pw.println("\t<insert id=\"addItem\" parameterType=\"" + clsName + "\">");
-            pw.println("\t\t<selectKey resultType=\"java.lang.Short\" order=\"AFTER\" keyProperty=\"pkid\">");
+            pw.println("\t\t<selectKey resultType=\"java.lang.Integer\" order=\"AFTER\" keyProperty=\"pkid\">");
             pw.println("\t\t\tSELECT LAST_INSERT_ID() AS pkid");
             pw.println("\t\t</selectKey>");
             pw.println("\t\tinsert into " + clsName + " (");
