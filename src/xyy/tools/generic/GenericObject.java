@@ -82,7 +82,7 @@ public class GenericObject {
         Connection con = getConnection();
 
         //查要生成实体类的表
-        String sql = "select * from " + tablename;
+        String sql = "select * from " + tablename + " where 1=2 ";
         PreparedStatement pStemt = con.prepareStatement(sql);
         buildTable(pStemt, tablename);
         pStemt.close();
@@ -406,6 +406,12 @@ public class GenericObject {
                 }
                 rs = "\t\trs.set" + initcap(fieldname) + "(TextUtils.getLong(data, \"" + fieldname + "\", " + defaultValue + "));";
                 break;
+            case "double":
+                if (defaultValue == null) {
+                    defaultValue = "0";
+                }
+                rs = "\t\trs.set" + initcap(fieldname) + "(TextUtils.getDouble(data, \"" + fieldname + "\", " + defaultValue + "));";
+                break;
             default:
                 if (defaultValue == null) {
                     defaultValue = "\"\"";
@@ -494,7 +500,7 @@ public class GenericObject {
         } else if (sqlType.equalsIgnoreCase("float")) {
             return "float";
         } else if (sqlType.equalsIgnoreCase("decimal") || sqlType.equalsIgnoreCase("numeric")
-                || sqlType.equalsIgnoreCase("real") || sqlType.equalsIgnoreCase("money")
+                || sqlType.equalsIgnoreCase("real") || sqlType.equalsIgnoreCase("money") || sqlType.equalsIgnoreCase("double")
                 || sqlType.equalsIgnoreCase("smallmoney")) {
             return "double";
         } else if (sqlType.equalsIgnoreCase("varchar") || sqlType.equalsIgnoreCase("char")
