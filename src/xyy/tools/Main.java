@@ -10,7 +10,7 @@ public class Main {
     //数据库连接
     public static final java.lang.String JDBC_URL = "jdbc:mysql://47.92.67.238:3306/chnsoft";
     public static final String NAME = "root";
-    public static final String PASS = "biscuit";
+    public static final String PASS = "";
     public static final String DRIVER = "com.mysql.jdbc.Driver";
 
     public static HashMap<String, EntityInfo> entityInfos = new HashMap<>();
